@@ -6,7 +6,7 @@ const Hero = () => {
 
   const handleFaceClick = (e) => {
     const newParticles = [];
-    const logos = ['/react.png', '/nextjs-hero.webp', '/javascript.png', '/typescript.png'];
+    const logos = ['/icon/react.png', '/icon/nextjs-hero.webp', '/icon/javascript.png', '/icon/typescript.png'];
     
     logos.forEach(logo => {
       // Create 10 popping particles per logo for paper confetti effect

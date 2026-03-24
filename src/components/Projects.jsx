@@ -3,22 +3,57 @@ import { createPortal } from 'react-dom';
 import { ExternalLink, Github, CalendarDays, X, CheckCircle2 } from 'lucide-react';
 import ScrollReveal from './ScrollReveal';
 
-const ImageWithLoader = ({ src, alt }) => {
-  const [loaded, setLoaded] = useState(false);
+const ImageSlider = ({ images }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!images || images.length === 0) return null;
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
-      {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-dark-900/50">
-          <div className="w-10 h-10 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+    <div className="relative w-full h-full bg-dark-950 aspect-video rounded-xl overflow-hidden group shadow-lg border border-white/10">
+      {images.map((src, index) => (
+        <div
+          key={src}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          }`}
+        >
+          <img src={src} alt={`Slide ${index + 1}`} className="w-full h-full object-contain" />
+        </div>
+      ))}
+      
+      {/* Navigation Indicators */}
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex ? 'bg-primary-400 w-6' : 'bg-white/40 w-2 hover:bg-white/80'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
       )}
-      <img
-        src={src}
-        alt={alt}
-        onLoad={() => setLoaded(true)}
-        className={`w-full h-auto object-contain rounded-xl border border-white/10 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        style={{ maxHeight: '70vh' }}
-      />
+      
+      {/* Prev/Next controls */}
+      {images.length > 1 && (
+        <>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1)); }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 backdrop-blur-md z-20"
+          >
+            ←
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % images.length); }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 backdrop-blur-md z-20"
+          >
+            →
+          </button>
+        </>
+      )}
     </div>
   );
 };
@@ -37,7 +72,7 @@ const projects = [
       goal: '오프라인의 추억인 롤링 페이퍼를 웹상에서도 즐길 수 있는 플랫폼을 구축하고자 했습니다. 리액트(React)를 활용한 다양한 기술적 실험이 용이하여 기획되었습니다.',
       design: '컴포넌트 단위의 구조화 및 React를 주력으로 활용했으며 Netlify를 통해 배포 환경을 구축했습니다.',
       feedback: '타 개발자가 만든 스켈레톤(Skeleton) 기능을 사용해 보았으나, 다음에는 직접 구현해 보고 싶다는 갈증을 느꼈습니다. 또한 백엔드 서버 통신 시 DB 지연 문제를 인지하게 되었습니다.',
-      image: '/rolling.png'
+      images: ['/rolling/rolling1.png', '/rolling/rolling2.png', '/rolling/rolling3.png']
     }
   },
   {
@@ -53,7 +88,7 @@ const projects = [
       goal: '`Schedule`과 `Do`의 합성어로, 단순한 일정 관리를 넘어 효율적인 협업 경험을 제공하기 위해 기획되었습니다. GitHub 프로젝트 관리와 노션 일정 관리에서 영감을 받았습니다.',
       design: '상태 관리를 위해 Zustand와 Tanstack Query를 도입하여 서버/클라이언트 상태를 최적화했습니다. 공통 모달(Modal) 컴포넌트를 설계하여 팀 전체의 개발 속도를 비약적으로 향상시켰습니다.',
       feedback: '공통 컴포넌트 설계가 협업 효율에 미치는 큰 영향력을 체감했습니다. 향후 소셜 로그인 부재를 보완하고 약관 동의 스크롤 UX 디테일을 개선할 계획입니다.',
-      image: '/schedo.png'
+      images: ['/schedo/schedo1.png', '/schedo/schedo2.png', '/schedo/schedo3.png']
     }
   },
   {
@@ -69,7 +104,7 @@ const projects = [
       goal: '전 세계의 다양한 문화 체험을 예약하고 참여할 수 있는 글로벌 무대 교류 플랫폼 기획 목적.',
       design: '핵심 기능으로 지도 API 연동하여 체험 장소를 시각화하고, 실시간 예약 시스템을 성공적으로 구축했습니다.',
       feedback: '지도 API 연결 과정에서의 이슈와 예약 기능에서 발생한 버그를 해결하며 API 연동과 관련된 실무 역량을 크게 키웠습니다.',
-      image: '/globalnomad.png'
+      images: ['/globalnomad/globalnomad1.png', '/globalnomad/globalnomad2.png']
     }
   },
   {
@@ -85,7 +120,7 @@ const projects = [
       goal: '온라인 쇼핑 시 의류의 핏이나 스타일이 자신과 맞지 않는 문제를 해결하기 위한 AI 가상 피팅(Virtual-Try-On) 서비스입니다.',
       design: 'FastAPI 서버, ComfyUI 파이프라인, ngrok 터널링, SSH 기반 SFTP를 활용해 프론트와 AI 연동 및 이미지 분석을 처리했습니다.',
       feedback: '백엔드 경험 없이도 FastAPI와 ngrok을 활용해 시스템을 구축하며 문제 해결 능력을 입증했습니다. 향후 Docker와 AWS EC2 배포가 목표입니다.',
-      image: '/fashionfitting.png'
+      images: ['/fashion/fashionfitting1.png', '/fashion/fashionfitting2.png', '/fashion/fashionfitting3.png']
     }
   }
 ];
@@ -143,16 +178,16 @@ const ProjectModal = ({ project, onClose }) => {
             {/* Content Body */}
             <div className="space-y-12">
               
-              {/* GIF / Image */}
-              <div className={`rounded-xl overflow-hidden flex items-center justify-center w-full shadow-inner ${!project.details.image ? 'border border-white/10 bg-dark-900 aspect-video' : 'min-h-[250px]'}`}>
-                {project.details.image ? (
-                  <ImageWithLoader src={project.details.image} alt={`${project.title} Preview`} />
+              {/* Image Slider */}
+              <div className={`w-full shadow-inner ${(!project.details.images || project.details.images.length === 0) ? 'border border-white/10 bg-dark-900 aspect-video rounded-xl flex items-center justify-center' : ''}`}>
+                {project.details.images && project.details.images.length > 0 ? (
+                  <ImageSlider images={project.details.images} />
                 ) : (
                   <div className="text-slate-500 flex flex-col items-center gap-4 text-center p-6">
                     <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-primary-500 animate-spin"></div>
                     <div>
-                      <span className="block font-medium text-slate-300 mb-1">Image / GIF Required</span>
-                      <span className="text-sm opacity-80 break-keep">작동 화면이나 이미지를 `public/` 폴더에 넣고 경로를 연결해 주세요.</span>
+                      <span className="block font-medium text-slate-300 mb-1">Images Required</span>
+                      <span className="text-sm opacity-80 break-keep">작동 화면이나 이미지를 `public/` 폴더에 넣고 연결해 주세요.</span>
                     </div>
                   </div>
                 )}
