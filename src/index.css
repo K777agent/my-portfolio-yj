@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  
+  @media (max-width: 640px) {
+    p br {
+      display: none;
+    }
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+@keyframes pop-and-fall {
+  0% { transform: translate(var(--startX), var(--startY)) scale(0) rotate(0deg); opacity: 1; }
+  25% { transform: translate(var(--peakX), var(--peakY)) scale(1.1) rotate(var(--rot1)); opacity: 1; }
+  100% { transform: translate(var(--endX), 300px) scale(0.8) rotate(var(--rot2)); opacity: 0; }
+}
+
+.particle {
+  animation: pop-and-fall var(--duration, 3s) ease-out forwards;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
