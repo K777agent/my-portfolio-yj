@@ -115,7 +115,7 @@ const Hero = () => {
           <div className="absolute inset-0 bg-primary-500/30 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           
           <img 
-            src="/face.jpg" 
+            src="/face1.jpg" 
             alt="Kim Ye-jun" 
             className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 object-cover rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 transform -rotate-3 transition-transform duration-300 group-hover:rotate-0 block" 
             onError={(e) => { 
