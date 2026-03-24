@@ -4,56 +4,156 @@ import { ExternalLink, Github, CalendarDays, X, CheckCircle2 } from 'lucide-reac
 import ScrollReveal from './ScrollReveal';
 
 const ImageSlider = ({ images }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [sliderIndex, setSliderIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [loadedImages, setLoadedImages] = useState({});
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  useEffect(() => {
+    setSliderIndex(1);
+    setIsTransitioning(false);
+    setIsAnimating(false);
+    setLoadedImages({});
+  }, [images]);
 
   if (!images || images.length === 0) return null;
 
+  if (images.length === 1) {
+    return (
+      <div className="relative w-full h-full bg-dark-950 aspect-video rounded-xl overflow-hidden group shadow-lg border border-white/10 flex items-center justify-center">
+        <img src={images[0]} alt="Slide 1" className="w-full h-full object-fill pointer-events-none" />
+      </div>
+    );
+  }
+
+  const extendedImages = [images[images.length - 1], ...images, images[0]];
+  const logicalIndex = sliderIndex === 0 ? images.length - 1 : sliderIndex === images.length + 1 ? 0 : sliderIndex - 1;
+
+  const nextSlide = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsTransitioning(true);
+    setSliderIndex(prev => prev + 1);
+  };
+
+  const prevSlide = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsTransitioning(true);
+    setSliderIndex(prev => prev - 1);
+  };
+
+  const goToSlide = (index) => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsTransitioning(true);
+    setSliderIndex(index + 1);
+  };
+
+  const handleTransitionEnd = () => {
+    setIsAnimating(false);
+    if (sliderIndex === 0) {
+      setIsTransitioning(false);
+      setSliderIndex(images.length);
+    } else if (sliderIndex === images.length + 1) {
+      setIsTransitioning(false);
+      setSliderIndex(1);
+    }
+  };
+
+  const onTouchStartHandler = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches ? e.targetTouches[0].clientX : e.clientX);
+  };
+
+  const onTouchMoveHandler = (e) => {
+    setTouchEnd(e.targetTouches ? e.targetTouches[0].clientX : e.clientX);
+  };
+
+  const onTouchEndHandler = () => {
+    if (touchStart === null || touchEnd === null) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 50) nextSlide();
+    if (distance < -50) prevSlide();
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') prevSlide();
+      if (e.key === 'ArrowRight') nextSlide();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAnimating, nextSlide, prevSlide]);
+
   return (
-    <div className="relative w-full h-full bg-dark-950 aspect-video rounded-xl overflow-hidden group shadow-lg border border-white/10">
-      {images.map((src, index) => (
-        <div
-          key={src}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-          }`}
-        >
-          <img src={src} alt={`Slide ${index + 1}`} className="w-full h-full object-contain" />
-        </div>
-      ))}
+    <div 
+      className="relative w-full h-full bg-dark-950 aspect-video rounded-xl overflow-hidden group shadow-lg border border-white/10 select-none cursor-grab active:cursor-grabbing touch-pan-y"
+      onTouchStart={onTouchStartHandler}
+      onTouchMove={onTouchMoveHandler}
+      onTouchEnd={onTouchEndHandler}
+      onMouseDown={onTouchStartHandler}
+      onMouseMove={(e) => touchStart !== null && onTouchMoveHandler(e)}
+      onMouseUp={onTouchEndHandler}
+      onMouseLeave={() => {
+        if (touchStart !== null) onTouchEndHandler();
+        setTouchStart(null);
+      }}
+    >
+      <div 
+        className={`flex w-full h-full ease-out ${isTransitioning ? 'transition-transform duration-500' : ''}`} 
+        style={{ transform: `translateX(-${sliderIndex * 100}%)` }}
+        onTransitionEnd={handleTransitionEnd}
+      >
+        {extendedImages.map((src, idx) => (
+          <div key={`${src}-${idx}`} className="w-full h-full shrink-0 relative flex items-center justify-center">
+            {!loadedImages[src] && (
+              <div className="absolute inset-0 flex items-center justify-center bg-dark-900 z-20">
+                <div className="w-10 h-10 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+              </div>
+            )}
+            <img 
+              src={src} 
+              alt={`Slide`} 
+              draggable={false}
+              onLoad={() => setLoadedImages(prev => ({ ...prev, [src]: true }))}
+              className={`w-full h-full object-fill transition-opacity duration-500 pointer-events-none ${loadedImages[src] ? 'opacity-100' : 'opacity-0'}`} 
+            />
+          </div>
+        ))}
+      </div>
       
       {/* Navigation Indicators */}
-      {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'bg-primary-400 w-6' : 'bg-white/40 w-2 hover:bg-white/80'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={(e) => { e.stopPropagation(); goToSlide(index); }}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              index === logicalIndex ? 'bg-primary-400 w-6' : 'bg-white/40 w-2 hover:bg-white/80'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
       
       {/* Prev/Next controls */}
-      {images.length > 1 && (
-        <>
-          <button 
-            onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1)); }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 backdrop-blur-md z-20"
-          >
-            ←
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % images.length); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 backdrop-blur-md z-20"
-          >
-            →
-          </button>
-        </>
-      )}
+      <button 
+        onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 backdrop-blur-md z-20"
+      >
+        ←
+      </button>
+      <button 
+        onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 backdrop-blur-md z-20"
+      >
+        →
+      </button>
     </div>
   );
 };
