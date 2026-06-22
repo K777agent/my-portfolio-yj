@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ExternalLink, Github, CalendarDays, X, CheckCircle2 } from 'lucide-react';
+import { ExternalLink, Github, CalendarDays, X, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import ScrollReveal from './ScrollReveal';
 
 const ImageSlider = ({ images }) => {
@@ -160,13 +160,29 @@ const ImageSlider = ({ images }) => {
 
 const projects = [
   {
+    id: 'weflow',
+    title: 'Weflow (문의 전환율 최적화 홈페이지 제작 서비스)',
+    period: '2026.06.15 ~ 2026.06.19',
+    description: '브랜드 아이덴티티를 살린 유체 시뮬레이션 기반 인터랙티브 Hero 캔버스 및 실시간 예약 제어 로직이 적용된 문의 전환율 최적화 비즈니스 매칭 플랫폼.',
+    tags: ['Next.js', 'TypeScript', 'Tailwind CSS', 'FastAPI', 'Vercel'],
+    color: 'from-blue-600 to-indigo-600',
+    repo: 'https://github.com/K777agent/weflow',
+    live: 'https://weflow-ebon.vercel.app/',
+    details: {
+      goal: '사용자 이름(Weflow)에 맞춰 시각적으로 몰입도 높은 유체 시뮬레이션(Fluid Simulation) 효과를 브라우저 상에 자연스럽고 고성능으로 렌더링하고, 유입된 고객의 실제 문의 및 실시간 예약으로 매끄럽게 연결되는 전환율 극대화 비즈니스 구조를 구축하고자 했습니다.',
+      design: 'Next.js App Router와 Tailwind CSS 기반으로 디자인 시스템을 구축해 화면 최적화와 다크/라이트 모드를 완벽히 지원하고, 관리자 페이지에서의 로그인 데이터베이스 연동 및 검증을 핵심 설계 요소로 구축했습니다.',
+      feedback: '현재 시점의 날짜 및 시간을 정밀 분석해 지난 시간대를 제어하고 예약 제한 인원을 실시간 검증하는 예약 슬롯 로직을 성공적으로 설계했습니다. 아울러 Vercel을 활용해 직접 호스팅하며 SEO 최적화와 배포 프로세스를 익혔습니다.',
+      images: ['/weflow/weflow1.png', '/weflow/weflow2.png']
+    }
+  },
+  {
     id: 'rolling',
     title: 'Rolling (추억의 롤링 페이퍼 프로젝트)',
     period: '2024.06.10 ~ 2024.06.22',
     description: '웹상에서 즐길 수 있는 롤링 페이퍼 플랫폼. Skeleton UI 구현의 중요성을 체득하고 백엔드 DB 속도 개선에 관심을 가지게 되었습니다.',
     tags: ['React', 'Styled-components', 'Skeleton UI'],
     color: 'from-orange-500 to-amber-400',
-    repo: 'https://github.com/K777agent/FE-Rolling-5team',
+    repo: 'https://github.com/FE-Rolling-5team/FE-Rolling-5team',
     live: 'https://rolling05.netlify.app/',
     details: {
       goal: '오프라인의 추억인 롤링 페이퍼를 웹상에서도 즐길 수 있는 플랫폼을 구축하고자 했습니다. 리액트(React)를 활용한 다양한 기술적 실험이 용이하여 기획되었습니다.',
@@ -347,6 +363,154 @@ const ProjectModal = ({ project, onClose }) => {
   );
 };
 
+const ProjectsMobileSlider = ({ projects, onSelectProject }) => {
+  const [sliderIndex, setSliderIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+
+  const extendedProjects = [projects[projects.length - 1], ...projects, projects[0]];
+
+  const nextSlide = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsTransitioning(true);
+    setSliderIndex(prev => prev + 1);
+  };
+
+  const prevSlide = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsTransitioning(true);
+    setSliderIndex(prev => prev - 1);
+  };
+
+  const handleTransitionEnd = () => {
+    setIsAnimating(false);
+    if (sliderIndex === 0) {
+      setIsTransitioning(false);
+      setSliderIndex(projects.length);
+    } else if (sliderIndex === projects.length + 1) {
+      setIsTransitioning(false);
+      setSliderIndex(1);
+    }
+  };
+
+  const onDragStart = (e) => {
+    if (isAnimating) return;
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    setStartX(clientX);
+    setDragOffset(0);
+    setIsTransitioning(false);
+  };
+
+  const onDragMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    setDragOffset(clientX - startX);
+  };
+
+  const onDragEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    setIsTransitioning(true);
+
+    if (dragOffset < -80) {
+      nextSlide();
+    } else if (dragOffset > 80) {
+      prevSlide();
+    } else {
+      setDragOffset(0);
+    }
+  };
+
+  useEffect(() => {
+    if (!isTransitioning) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(true);
+      }, 20);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning]);
+
+  return (
+    <div className="relative w-full px-12 overflow-hidden select-none">
+      <div 
+        className="flex touch-pan-y cursor-grab active:cursor-grabbing"
+        style={{
+          transform: `translateX(calc(-${sliderIndex * 100}% + ${dragOffset}px))`,
+          transition: isTransitioning ? 'transform 500ms cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+        }}
+        onTouchStart={onDragStart}
+        onTouchMove={onDragMove}
+        onTouchEnd={onDragEnd}
+        onMouseDown={onDragStart}
+        onMouseMove={onDragMove}
+        onMouseUp={onDragEnd}
+        onMouseLeave={onDragEnd}
+        onTransitionEnd={handleTransitionEnd}
+      >
+        {extendedProjects.map((project, idx) => (
+          <div key={`${project.id}-${idx}`} className="w-full shrink-0 px-2 box-border">
+            <div 
+              onClick={() => onSelectProject(project)}
+              className="group glass rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 flex flex-col h-full cursor-pointer"
+            >
+              <div className={`h-2 relative w-full bg-gradient-to-r ${project.color} opacity-80`} />
+              
+              <div className="p-8 flex flex-col flex-1 min-h-[350px]">
+                <div className="mb-4">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-primary-400 mb-2">
+                    <CalendarDays size={14} /> {project.period}
+                  </span>
+                  <h3 className="text-2xl font-bold text-white mb-3">
+                    {project.title}
+                  </h3>
+                </div>
+                
+                <p className="text-slate-300 mb-8 leading-relaxed flex-1">
+                  {project.description}
+                </p>
+                
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {project.tags.map(tag => (
+                    <span key={tag} className="text-xs font-medium px-2.5 py-1 rounded-md bg-white/5 text-slate-300 border border-white/10">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between items-center pt-5 border-t border-white/10 mt-auto text-primary-400 text-sm font-medium">
+                  <span>프로젝트 상세 내용 보기</span>
+                  <span>→</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button 
+        onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+        className="absolute left-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white border border-white/10 transition-all hover:bg-primary-500 backdrop-blur-md z-30"
+        aria-label="Previous Project"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <button 
+        onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+        className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white border border-white/10 transition-all hover:bg-primary-500 backdrop-blur-md z-30"
+        aria-label="Next Project"
+      >
+        <ChevronRight size={20} />
+      </button>
+    </div>
+  );
+};
+
 const Projects = () => {
   const [selectedProject, setSelectedProject] = useState(null);
 
@@ -358,7 +522,8 @@ const Projects = () => {
         </h2>
       </ScrollReveal>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8">
+      {/* Desktop view: Grid layout */}
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8">
         {projects.map((project, idx) => (
           <ScrollReveal key={project.id} delay={idx * 150} className="h-full">
             <div 
@@ -397,6 +562,11 @@ const Projects = () => {
             </div>
           </ScrollReveal>
         ))}
+      </div>
+
+      {/* Mobile view: Swipeable infinite slider */}
+      <div className="block md:hidden">
+        <ProjectsMobileSlider projects={projects} onSelectProject={setSelectedProject} />
       </div>
 
       {selectedProject && (
